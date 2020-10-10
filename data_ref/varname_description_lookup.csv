@@ -1,0 +1,37 @@
+Field Name,Definition
+RefID,Unique (sequential) number assigned to vehicles
+IsBadBuy,Identifies if the kicked vehicle was an avoidable purchase 
+PurchDate,Date of purchase
+Auction,Auction provider for the purchase
+VehYear,Manufacturer's year
+VehicleAge,Years elapsed since the manufacturer's year
+Make,Manufacturer 
+Model,Model
+Trim,Trim level
+SubModel,Submodel
+Color,Color
+Transmission,Transmission type
+WheelTypeID,The type id of the vehicle wheel
+WheelType,Wheel type
+VehOdo,Odometer reading (mileage)
+Nationality,Manufacturer's country
+Size,Size category
+TopThreeAmericanName,Identifies if the manufacturer is one of the top three American manufacturers
+MMRAcquisitionAuctionAveragePrice,"Expected price: in auction market, in average condition"
+MMRAcquisitionAuctionCleanPrice,"Expected price: in auction market, in above-average condition"
+MMRAcquisitionRetailAveragePrice,"Expected price: in retail market, in average condition"
+MMRAcquisitionRetailCleanPrice,"Expected price: in retail market, in above-average condition"
+MMRCurrentAuctionAveragePrice,Acquisition price for this vehicle in the auction market in average condition as of current day
+MMRCurrentAuctionCleanPrice,Acquisition price for this vehicle in the auction market in above condition as of current day
+MMRCurrentRetailAveragePrice,Acquisition price for this vehicle in the retail market in average condition as of current day
+MMRCurrentRetailCleanPrice,Acquisition price for this vehicle in the retail market in above average condition as of current day
+PRIMEUNIT,Identifies if the vehicle would have a higher demand than a standard purchase
+AcquisitionType,"Identifies how the vehicle was acquired (Auction buy, trade in, etc)"
+AUCGUART,Auction's level of guarantee 
+KickDate,Date the vehicle was kicked back to the auction
+BYRNO,Buyer's unique ID
+VNZIP1,Zipcode of purchase
+VNST,State of purchase
+VehBCost,Price
+IsOnlineSale,Purchase occurred online (yes/no)
+WarrantyCost,Warranty price (term = 36month and mileage = 36K) 

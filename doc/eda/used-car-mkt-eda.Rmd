@@ -1,0 +1,604 @@
+---
+title: "Predicting Lemons at Wholesale Auto Auctions (1)"
+subtitle: "Data Exploration"
+output: 
+  html_document:
+    theme: readable
+bibliography: ["master_bib.bib"]
+biblio-style: "apalike"
+link-citations: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.showtext = TRUE)
+
+library(tidyverse)
+library(scales)
+library(kableExtra)
+library(patchwork)
+
+library(xaringanthemer)
+style_mono_light(base_color = "#23395b")
+```
+
+```{r}
+
+  #force integer axes for ggplots
+  int_breaks <- function (n = 5, ...) {
+    
+    function(x) {
+        breaks <- floor( pretty(x, n, ...) )
+        names(breaks) <- attr(breaks, "labels")
+        breaks
+    }
+  }
+
+
+  title_font_size <- 13; text_font_size <- 11
+  fill_color_yes <- "#fcbba1"; fill_color_no <- "#9ecae1"
+  caption_blog <- "Sources: Kaggle/Carvana data, AA Analytics calculations." ; subtitle_blog <- "Exploring wholesale auto auction transaction data. \nOverall average lemon rate shown via dashed line." ; subtitle_blog_kde <- "Exploring wholesale auto auction transaction data."
+
+```
+
+```{r cache = T}
+
+tbl_pres_pred <- read_csv("../../data_ref/varname_description_present_predictors.csv")
+
+p_distr_discrete.l <- readRDS("../../plots/unsupervised/discrete_var_bars.rds")
+p_distr_discrete_by_y.l <- readRDS("../../plots/supervised/discrete_var_bars_by_y.rds")
+
+p_distr_conti_by_y.l <- readRDS("../../plots/supervised/price_quantities_by_y.rds")   
+
+# link_blog1 <- "https://alexabraham-analytics.com/post/2020-07-27-linearmodelsprimer/"
+# link_code <- "https://github.com/abrahamalex13/ml-vs-trad"
+
+```
+
+
+
+**Key Takeaways**
+
+- Around 2012, Carvana -- a car retailer -- posted wholesale auto auction transaction data,
+prompting analysts to predict whether a purchased vehicle would turn out to be a lemon. 
+Historical data of this sort may help auction buyers avoid future lemons.
+
+- Preliminary insights follow from visual exploration of the data. 
+
+
+&nbsp; 
+
+
+
+# Why is this Case Study Worth a Read?
+
+Among 10 cars purchased at wholesale auto auction,
+1 turns out to be a lemon, on average.^[Sources: Featured Carvana dataset, author's calculations. 
+Years examined are 2009 and '10.] 
+The associated cost scales rapidly over time and the population of car retailers. 
+_How can wholesale auto auction transaction data help buyers avoid future lemons?_
+That is the exciting business question 
+for the sold-at-wholesale auto auction data I examine.
+
+
+
+# About the Sold-at-Wholesale Auto Auction Data
+
+Around 2012, Carvana -- a car retailer --
+posted wholesale auto auction transaction data for a prediction [competition](https://www.kaggle.com/c/DontGetKicked). 
+The instruction: "predict if a car purchased at auction is a lemon" [@kaggle_carvana]. 
+_Carvana defines a lemon as a car with
+"serious issues that prevent it from being sold to customers [...] 
+[such as] tampered odometers, mechanical issues the dealer is not
+able to address, issues with getting the vehicle title from the seller," etc_ [@kaggle_carvana].
+
+How do these data look in a spreadsheet? What's the structure?
+One row^[A "row" may also be called a "record" or an "observation".] represents a vehicle purchased at auction.
+That row contains vehicle and transaction information
+which may help predict the key outcome: 
+whether the vehicle turns out to be a lemon ("yes" or "no").
+The data record approximately 70,000 auction purchases.
+
+The data contain these potential predictors^[I omit some predictors contained in the 
+full data because they convey redundant information.] of whether a vehicle turns out to be a lemon:
+
+```{r}
+
+  tbl_pres_pred %>% 
+    dplyr::select(Definition) %>% 
+    rename(Description = Definition) %>% 
+    kable(caption = "Sold-at-Wholesale Auto Auction Data: Transaction and Vehicle Information Recorded") %>% 
+    kable_styling()
+
+```
+
+With relatively many possible predictors, how might the data analysis proceed?
+**In my view, optimal data analysis combines theory and computational pattern-finding.**
+Subject matter expertise (theory) should offer a general guide for quantitative modeling. 
+However, that level of knowledge may not be specific enough to the data at hand.
+So theory and intuition also follow from exploring the available data: through charts,
+summary statistics, and so on^[In the lingo, _exploratory data analysis_ (EDA).]. 
+I undertake this data exploration in the blog content that follows.
+
+
+
+
+
+
+&nbsp;
+
+# Data Exploration
+
+Data exploration helps address critical questions
+which must precede any formal modeling.
+
+- Do the values recorded in my data look reasonable? 
+  Are there obvious recording errors or ambiguities?
+- How would I describe these data's contents to a colleague, client, or friend?
+- What relationships appear interesting, and what's the intuition?
+
+I find narrative-form data exploration especially insightful^[
+I reserve technical predictive algorithms for later posts.]. 
+
+
+## Examine Categorical Variables' Values
+
+To begin, I select one variable and examine its values in a couple ways --
+(a) without regard for the lemon/not lemon outcome, or (b) by lemon/not lemon outcome.^[In the interest of brevity, 
+I present the recorded values after accounting for missing data and other quirks.] 
+Intuitively, how do we recognize a true predictor of lemon status? 
+Consider one value of that predictor, and then narrow focus to those cases in the data. 
+If among those cases, the lemon rate differs notably versus its full-data average,
+that predictor (value) is informative. 
+
+I begin with variables that take categorical/discrete values.
+When examining cases by lemon/not lemon outcome, 
+I also plot the full-data average lemon probability -- about 12%.
+
+
+### Manufacturer's Year
+
+```{r cache = T}
+  p1 <- p_distr_discrete.l[["VehYear"]] + 
+    scale_x_continuous(breaks = int_breaks()) +
+    
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+    
+
+  p2 <- p_distr_discrete_by_y.l[["VehYear"]] + 
+    scale_x_continuous(breaks = int_breaks()) + 
+    labs(caption = caption_blog, x = NULL) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+    
+  
+  p1 / p2
+    
+```
+
+For example -- the above chart shows that among vehicles with manufacturer year of 2001,
+about 25% turn out to be lemons. Broadly, older vehicles have above-average
+lemon rates. Didn't need a quantitative analyst to tell you that!
+
+
+### Manufacturer (Make)
+
+We learn about peculiar wholesale auction dynamics when exploring by manufacturer (Make). 
+
+```{r cache = T, fig.height = 6, fig.width = 10}
+  p1 <- 
+    p_distr_discrete.l[["Make"]] + 
+      coord_flip() + 
+      
+      theme(axis.text.x = element_text(angle = 0), plot.subtitle = element_text(size = text_font_size)) + 
+      labs(subtitle = subtitle_blog, x = NULL) + 
+      
+      theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+
+  p2 <- 
+    p_distr_discrete_by_y.l[["Make"]] + 
+      coord_flip() + 
+      
+      theme(axis.text.x = element_text(angle = 0), legend.position = "top") + 
+      labs(x = NULL, caption = caption_blog) + 
+    
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+  
+  p1 + p2
+
+```
+
+Begin with the by-Make counts, which help inform _uncertainty_ about by-Make expectations.
+Intuitively, after we observe many cars from a Make, 
+we're more certain about what to expect from that Make.
+Conversely, if we've observed few cars from a Make, 
+we're highly uncertain about what to expect -- 
+the baseline could change significantly with only a couple more observations.
+
+For example, the data inform fairly certain expectations for 
+Chevrolet, Dodge, Ford, or Chrysler. For many Makes, though, the data
+are not very informative about what to expect. 
+How could we try and make a highly uncertain expectation less wrong?
+**Lower error may result when an expectation
+down-weights inconclusive data and incorporates other information.
+Statistics calls this paradigm the bias-variance trade-off.**
+
+Proceed to average lemon rates by Make. These reveal the peculiar, counter-intuitive
+nature of vehicles sold at wholesale auction. For example,
+luxury brands tend to have above-average lemon rates. Why? 
+The phenomenon of _adverse selection_ may explain. 
+If a luxury vehicle makes it to wholesale auction,
+that vehicle is likely anomalous in an unpleasant way. 
+Of course, luxury brands constitute a small fraction of all transactions. 
+Among Makes more frequently observed, 
+the lemon rate appears to differ significantly from its overall average.
+
+
+
+
+### Size Category
+
+```{r cache = T, fig.height = 5, fig.width = 10}
+  p1 <- 
+    p_distr_discrete.l[["Size"]] + 
+      coord_flip() + 
+  
+      theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+      theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+
+  p2 <- 
+    p_distr_discrete_by_y.l[["Size"]] + 
+      coord_flip() + 
+      theme(legend.position = "top") + 
+      
+      labs(x = NULL, caption = caption_blog) + 
+    
+      theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+      scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+
+  p1 + p2
+
+```
+
+Most observed vehicles have a sedan-like size. 
+Among sizes seen more often, 
+the lemon rate appears to differ significantly from its overall average.
+
+
+
+### Transmission Type
+
+```{r cache = T}
+  p1 <- p_distr_discrete.l[["Transmission"]] + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+
+  p2 <- p_distr_discrete_by_y.l[["Transmission"]] + 
+    labs(caption = caption_blog, x = NULL) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+  
+  p1 / p2
+```
+
+Among transmission types often observed,
+the lemon rate does not appear to differ much from its overall average. 
+So transmission type doesn't appear to predict lemon probability.
+
+
+
+
+
+### Color
+
+Color lacks a clear theoretical
+relationship with lemon probability. 
+Perhaps cars with heavy wear-and-tear
+have also been painted with aftermarket colors?
+Nonetheless, it is worth checking for any data surprises. 
+
+```{r cache = T, fig.width = 10}
+  p1 <- p_distr_discrete.l[["Color"]] + coord_flip() + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) +
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+
+  p2 <- p_distr_discrete_by_y.l[["Color"]] + 
+    coord_flip() + 
+    theme(legend.position = "top") + 
+    labs(x = NULL, caption = caption_blog) + 
+    
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+  
+  p1 + p2
+```
+
+Among colors often observed,
+the lemon rate does not appear to differ much
+from its overall average. So color is likely
+unhelpful as a predictor of lemon probability.
+
+
+
+
+
+### Wheel Type
+
+Wheel type lacks a clear theoretical
+relationship with lemon probability. 
+So initially the variable may
+not seem to deserve investigation.
+However, in this case, hands-on
+data exploration reveals an intriguing pattern. 
+_This is an example where data exploration/understanding
+yields great return, which theory alone would miss._
+
+```{r cache = T}
+  p1 <- p_distr_discrete.l[["WheelType"]] + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+  
+  p2 <- p_distr_discrete_by_y.l[["WheelType"]] + 
+    labs(caption = caption_blog, x = NULL) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+  
+  p1 / p2
+```
+
+When wheel type is coded NULL, the lemon rate jumps far above-average. 
+Why? Simply put, here is a data quirk. Perhaps NULL wheel type proxies
+for some troublesome mechanical phenomenon. Perhaps a data entry fluke
+tends to occur for troublesome vehicles. Whatever the truth of it, 
+unnecessary downside risk haunts a lemon prediction which ignores wheel type.
+
+
+
+
+
+### Auction
+
+```{r cache = T}
+  p1 <- p_distr_discrete.l[["Auction"]] + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+
+
+  p2 <- p_distr_discrete_by_y.l[["Auction"]] + 
+    labs(caption = caption_blog, x = NULL) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+    
+  
+  p1 / p2
+```
+
+On average, a bit more lemon risk 
+may be incurred by purchasing from Adesa.
+
+
+
+
+
+### Auction's Level of Guarantee
+
+```{r cache = T}
+  p1 <- p_distr_discrete.l[["AUCGUART"]] + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+  
+  p2 <- p_distr_discrete_by_y.l[["AUCGUART"]] + 
+    labs(caption = caption_blog, x = NULL) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+    
+  
+  p1 / p2
+```
+
+For a 'Green' guarantee, 
+the lemon rate drops substantially from its overall average.
+Similar to the study of wheel type, level of guarantee
+may help predict not-lemon probability in those special 
+'Green' cases.
+
+
+
+
+
+### Purchase Occurred Online
+
+```{r cache = T}
+  p1 <- p_distr_discrete.l[["IsOnlineSale"]] + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+  
+  p2 <- p_distr_discrete_by_y.l[["IsOnlineSale"]] + 
+    labs(caption = caption_blog, x = NULL) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+  
+  p1 / p2
+```
+
+By transaction forum,
+the lemon rate does not appear to differ much from its overall average. 
+So transaction forum doesn't appear to predict lemon probability.
+
+
+
+
+
+### State
+
+```{r cache = T, fig.height = 6, fig.width = 10}
+  p1 <- p_distr_discrete.l[["VNST"]] + coord_flip() + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + labs(subtitle = subtitle_blog, x = NULL) + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size)
+  
+  p2 <- p_distr_discrete_by_y.l[["VNST"]] + coord_flip() + 
+    labs(x = NULL, caption = caption_blog) + 
+    
+    theme(legend.position = "top") + 
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_fill_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+  
+  p1 + p2
+```
+
+State of purchase contains many categorical values,
+like Make did previously. So the analytical approach
+for Make may be adapted here.
+
+Frequency counts suggest fairly certain expectations may follow
+for a handful of states. To name a clear few, these include Texas, Florida, 
+California, and North Carolina. On the other hand, the data 
+support only weakly certain expectations for fairly many states.
+For instance, few New York or Illinois cases are observed.
+
+State-to-state, the lemon rate appears to differ significantly from its overall average.
+So state of purchase may help predict lemon probability.
+
+
+
+
+
+
+
+
+## Examine Numeric Variables' Values
+
+### Purchase Price Ratios
+
+Price variables are interesting
+when considered in a particular form. 
+It seems reasonable to theorize that 
+if a vehicle carries higher lemon risk, 
+it's sold "cheap" at auction. But how might "cheap" or "expensive" be quantified? 
+One metric I create is a ratio of actual purchase price to peer group expected price. 
+There are different peer group expected price series, allowing a few calculation variants.
+
+Another ratio worth examining is warranty price to actual purchase price.
+As a vehicle's lemon risk increases, it likely costs more to insure.
+
+```{r fig.height = 9, fig.width = 14, cache = T}
+
+  p1 <- p_distr_conti_by_y.l[["RatioCostAuctionAverage"]] + 
+    theme(plot.subtitle = element_text(size = text_font_size)) + 
+    labs(title = "Distribution by Outcome: Price Ratio, \nActual to (Average Condition, Auction Sale) Peer Group Expected",
+         subtitle = subtitle_blog_kde)
+   
+
+  p2 <- p_distr_conti_by_y.l[["RatioCostRetailAverage"]] + 
+    labs(title = "Distribution by Outcome: Price Ratio, \nActual to (Average Condition, Retail Sale) Peer Group Expected")
+  
+  p3 <- p_distr_conti_by_y.l[["RatioCostAuctionClean"]] + 
+    labs(title = "Distribution by Outcome: Price Ratio, \nActual to (Good Condition, Auction Sale) Peer Group Expected")
+  p4 <- p_distr_conti_by_y.l[["RatioCostRetailClean"]] + 
+    labs(title = "Distribution by Outcome: Price Ratio, \nActual to (Good Condition, Retail Sale) Peer Group Expected", 
+         caption = caption_blog) 
+    
+  
+  (p1 + p2) / (p3 + p4) & 
+      ( scale_color_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no)) ) & 
+      (theme(legend.position = "top") + theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size))
+
+```
+
+These charts raise more questions than they address. 
+At first glance, it appears that high relative prices
+occur _more_ frequently among lemons. For example, 
+consider the price ratio for average condition/auction sale peer group (top left).
+There's higher concentration within 1.25 to 2 among lemons, versus not-lemons. 
+How could this be? Perhaps the visual differences in concentration are quantitatively insignificant. 
+Or perhaps the peer group definitions have strong influence.
+
+<!-- Or, maybe vehicles with obviously high lemon risk never even sell at auction. -->
+<!-- Under that premise, lemon probabilities won't intuitively inform prices. -->
+A data-driven theory arises from a study of the warranty-to-price ratio: 
+
+```{r cache = T}
+
+  p_distr_conti_by_y.l[["RatioWarrantyVehBCost"]] + 
+    labs(title = "Distribution by Outcome: Warranty to Purchase Price", 
+         subtitle = subtitle_blog_kde, caption = caption_blog) + 
+    theme(legend.position = "top", plot.subtitle = element_text(size = text_font_size)) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_color_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+  
+```
+
+High warranty-to-price seems to occur more frequently among lemons. 
+This makes good sense -- as lemon risk rises, so too should relative warranty price. 
+If the data's recorded vehicle price includes warranty price, 
+the former may appear elevated relative to peers. 
+
+
+
+### Mileage
+
+Vehicle mileage offers perhaps the most intuitive predictor of lemon probability. 
+
+```{r cache = T}
+
+    p_distr_conti_by_y.l[["VehOdo"]] + 
+    labs(subtitle = subtitle_blog_kde, caption = caption_blog) + 
+    scale_x_continuous(labels = scales::unit_format(unit = "k", scale = 1e-3)) + 
+    theme(legend.position = "top", plot.subtitle = element_text(size = text_font_size)) + 
+  
+    theme_xaringan(title_font_size = title_font_size, text_font_size = text_font_size) + 
+    scale_color_manual(values=c("Yes" = fill_color_yes, "No" = fill_color_no))
+
+```
+
+High mileage occurs more frequently among lemons. 
+The interesting part will be quantifying how lemon risk varies with mileage.
+
+
+
+&nbsp;
+
+# We've Only Scratched the Surface!
+
+I draw highlights from this first project step and map the road ahead. 
+
+Simple single-variable tabulations reveal the broad contents 
+of sold-at-wholesale auto auction data. Some quirks become apparent --
+see wheel type, for instance. However, no critical data quality concerns arise.
+  
+Categorical predictors of lemon probability may take many possible values -- see Make or State. 
+
+- How should a quantitative model handle rarely-observed predictor values? 
+When low frequency counts render the primary data weakly informative, 
+might strategic data down-weighting improve predictions?
+  
+Charts suggest which predictors have first-order impacts on lemon rate.
+
+- How will a quantitative model rank variables' importance?
+- How do predictors _jointly_ impact lemon rates? 
+  For example -- consider three separate lemon rates, among: (a) 
+  2005 manufacturer year, (b) Chevrolet, and (c) Equinox models. 
+  Should these pieces come together and correctly describe the lemon rate for
+  2005 Chevrolet Equinoxes? Perhaps not. 
+  When vehicle characteristics are considered separately,
+  there may be a _joint_ dynamic missed. There exist enormously
+  many combinations of this sort. Automated quantitative models 
+  will drive this exploration efficiently.
+
+
+
+
+
+
+&nbsp;
+
+# References

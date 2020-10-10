@@ -1,0 +1,26 @@
+Field Name,Definition
+PurchDate,Date of purchase
+Auction,Auction
+VehYear,Manufacturer's year
+VehicleAge,Years elapsed since the manufacturer's year
+Make,Manufacturer 
+Model,Model
+Trim,Trim level
+SubModel,Submodel
+Color,Color
+Transmission,Transmission type
+WheelType,Wheel type
+VehOdo,Odometer reading (mileage)
+Nationality,Manufacturer's country
+Size,Size category
+MMRAcquisitionAuctionAveragePrice,"Expected price: in auction market, in average condition"
+MMRAcquisitionAuctionCleanPrice,"Expected price: in auction market, in above-average condition"
+MMRAcquisitionRetailAveragePrice,"Expected price: in retail market, in average condition"
+MMRAcquisitionRetailCleanPrice,"Expected price: in retail market, in above-average condition"
+AUCGUART,Auction's level of guarantee 
+BYRNO,Buyer's unique ID
+VNZIP1,Zipcode of purchase
+VNST,State of purchase
+VehBCost,Price
+IsOnlineSale,Purchase occurred online (yes/no)
+WarrantyCost,Warranty price (term = 36-month and mileage = 36K) 
