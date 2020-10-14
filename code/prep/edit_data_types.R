@@ -19,9 +19,16 @@ test1 <- test1 %>%
 
 
 
+varname_to_char <- c("BYRNO")
+train1 <- train1 %>% 
+  mutate_at(varname_to_char, as.character)
+test1 <- test1 %>% 
+  mutate_at(varname_to_char, as.character)
+
+
+
 
 varname_to_date <- c("PurchDate")
-
 train1 <- train1 %>% 
   mutate_at(varname_to_date, format = "%m/%d/%Y", as.Date)
 test1 <- test1 %>% 

@@ -11,6 +11,9 @@ library(caret)
 library(doPrepExplore)
 library(scales)
 library(doParallel)
+library(parallel)
+
+library(glmnet)
 
 set.seed(2349)
 
@@ -103,6 +106,9 @@ source("code/explore/tab_features.R")
 # source("code/explore/plot_features_distr_univar.R")
 # source("code/present/present_plot_features_distr_univar.R")
 
+source("code/prep/enforce_holdout.R")
+source("code/prep/prep_matrix_model.R")
+
 #end prep ------
 
 
@@ -110,8 +116,6 @@ source("code/explore/tab_features.R")
 #explore (enforcing keep/holdout paradigm) -----
 
 # source("code/explore/unsuper_conti_features.R")
-
-source("code/explore/enforce_holdout.R")
 
 # source("code/explore/plot_features_distr_by_outcome.R")
 # source("code/present/present_plot_features_distr_by_outcome.R")
@@ -123,7 +127,9 @@ source("code/explore/enforce_holdout.R")
 
 #model ----------
 
-source("code/model/main_effects_baseline.R")
+# source("code/model/baseline_fixed_effects_logistic.R")
+source("code/model/penalized_linear.R")
+# source("code/model/sandbox.R")
 
 
 #end model -----

@@ -56,10 +56,12 @@ test1 <- test1 %>%
 
 # categorical feature dimension reduction ----
 
+thresh_nobs <- 100
+
 #vehicle
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make", threshold = 100 / nrow(train1))
+train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make", threshold = thresh_nobs / nrow(train1))
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "VehYear", threshold = 100 / nrow(train1), value_consol = 1)
+  doPrepExplore:::consolidate_sparse_other_cat(train1, "VehYear", threshold = thresh_nobs / nrow(train1), value_consol = 1)
 
 train1 <- train1 %>% 
   mutate(Make_Model_agg = paste(Make, "_", Model_agg, sep = ""))
@@ -68,34 +70,35 @@ train1 <- train1 %>%
          Make_Model_agg_Year = paste(Make_Model_agg, "_", VehYear, sep = ""),
          Make_Model_agg_Trim_Year = paste(Make_Model_agg, "_", Trim, "_", VehYear, sep = ""))
 
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg", threshold = 100 / nrow(train1))
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Trim", threshold = 100 / nrow(train1))
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Year", threshold = 100 / nrow(train1))
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Trim_Year", threshold = 100 / nrow(train1))
+train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg", threshold = thresh_nobs / nrow(train1))
+train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Trim", threshold = thresh_nobs / nrow(train1))
+train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Year", threshold = thresh_nobs / nrow(train1))
+train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Trim_Year", threshold = thresh_nobs / nrow(train1))
 
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "Size", threshold = 100 / nrow(train1))
+  doPrepExplore:::consolidate_sparse_other_cat(train1, "Size", threshold = thresh_nobs / nrow(train1))
 
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "Color", threshold = 100 / nrow(train1))
+  doPrepExplore:::consolidate_sparse_other_cat(train1, "Color", threshold = thresh_nobs / nrow(train1))
 
 
 
 #transaction
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "VNST", threshold = 100 / nrow(train1))
+  doPrepExplore:::consolidate_sparse_other_cat(train1, "VNST", threshold = thresh_nobs / nrow(train1))
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "VNZIP1", threshold = 100 / nrow(train1))
+  doPrepExplore:::consolidate_sparse_other_cat(train1, "VNZIP1", threshold = thresh_nobs / nrow(train1))
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "BYRNO", threshold = 100 / nrow(train1), value_consol = 1)
+  doPrepExplore:::consolidate_sparse_other_cat(train1, "BYRNO", threshold = thresh_nobs / nrow(train1), value_consol = "OTHER")
 
 
 
 
 
 
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make", threshold = 100 / nrow(test1))
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Model_agg", threshold = 100 / nrow(test1))
+
+test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make", threshold = thresh_nobs / nrow(test1))
+test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Model_agg", threshold = thresh_nobs / nrow(test1))
 test1 <- test1 %>% 
   mutate(Make_Model_agg_consol = case_when(
     
@@ -105,9 +108,9 @@ test1 <- test1 %>%
   ))
 test1 <- test1 %>% 
   mutate(Make_Model_agg_Year = paste(Make_Model_agg_consol, "_", VehYear, sep = ""))
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make_Model_agg_Year", threshold = 200 / nrow(test1))
+test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make_Model_agg_Year", threshold = thresh_nobs / nrow(test1))
 
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "VehYear", threshold = 100 / nrow(test1), value_consol = 1)
+test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "VehYear", threshold = thresh_nobs / nrow(test1), value_consol = 1)
 
 
 #end cat feature dim reduction -----
