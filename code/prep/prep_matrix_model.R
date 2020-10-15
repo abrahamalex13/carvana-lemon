@@ -55,7 +55,13 @@ varnames_x <- c("Make_consol", "VehYear_consol", "Size_consol", "WheelType",
                 
                 "Auction", "AUCGUART", "VNST_consol", "VNZIP1_consol", "BYRNO_consol",
                 
-                "Make_Model_agg_consol", "Make_Model_agg_Year_consol", "Make_Model_agg_Trim_Year_consol")
+                "Make_Model_consol", "Make_VehYear_consol",
+                
+                "Make_Model_SubModel_consol", "Make_Model_Trim_consol", "Make_Model_VehYear_consol",
+                
+                "Make_Model_SubModel_Trim_consol", "Make_Model_SubModel_VehYear_consol",
+              
+                "Make_Model_SubModel_Trim_VehYear_consol")
 
 varnames_conti <- c("RatioWarrantyVehBCost", "VehOdo_log")
 varnames_discrete <- varnames_x[-which(varnames_x %in% varnames_conti)]

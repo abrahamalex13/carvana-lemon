@@ -127,8 +127,9 @@ source("code/prep/prep_matrix_model.R")
 
 #model ----------
 
-# source("code/model/baseline_fixed_effects_logistic.R")
-source("code/model/penalized_linear.R")
+source("code/model/summarize_pred_binary.R")
+source("code/model/baseline_fixed_effects_logistic.R")
+# source("code/model/penalized_linear.R")
 # source("code/model/sandbox.R")
 
 

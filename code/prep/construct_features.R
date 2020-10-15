@@ -54,32 +54,78 @@ test1 <- test1 %>%
 
 
 
-# categorical feature dimension reduction ----
+# categorical feature dimension reduction -----------
 
-thresh_nobs <- 100
+thresh_nobs <- 50
 
-#vehicle
+
+#vehicle characteristics ---------
+
 train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make", threshold = thresh_nobs / nrow(train1))
 train1 <- 
   doPrepExplore:::consolidate_sparse_other_cat(train1, "VehYear", threshold = thresh_nobs / nrow(train1), value_consol = 1)
 
-train1 <- train1 %>% 
-  mutate(Make_Model_agg = paste(Make, "_", Model_agg, sep = ""))
-train1 <- train1 %>% 
-  mutate(Make_Model_agg_Trim = paste(Make_Model_agg, "_", Trim, sep = ""),
-         Make_Model_agg_Year = paste(Make_Model_agg, "_", VehYear, sep = ""),
-         Make_Model_agg_Trim_Year = paste(Make_Model_agg, "_", Trim, "_", VehYear, sep = ""))
 
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg", threshold = thresh_nobs / nrow(train1))
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Trim", threshold = thresh_nobs / nrow(train1))
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Year", threshold = thresh_nobs / nrow(train1))
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_agg_Trim_Year", threshold = thresh_nobs / nrow(train1))
+#Make/Model/SubModel/Trim
+varnames_main_fx_Make <- c("Model", "VehYear")
+invisible(lapply(varnames_main_fx_Make, varname_pre = "Make", function(x, varname_pre) {
+  
+  varname_iact <- paste(varname_pre, x, sep = "_")
+  train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
+  train1 <<- 
+    doPrepExplore:::consolidate_sparse_other_cat(train1, varname_iact, threshold = thresh_nobs / nrow(train1))
+  
+  return(NULL)
+  
+}))
+train1 <- doPrepExplore:::construct_interact_char(train1, c("Make_Model", "SubModel"))
+train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_SubModel", threshold = thresh_nobs / nrow(train1))
+
+
+
+varnames_2fx_Make_Model <- c("SubModel", "Trim", "VehYear")
+invisible(lapply(varnames_2fx_Make_Model, varname_pre = "Make_Model", function(x, varname_pre) {
+  
+  varname_iact <- paste(varname_pre, x, sep = "_")
+  train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
+  train1 <<- 
+    doPrepExplore:::consolidate_sparse_other_cat(train1, varname_iact, threshold = thresh_nobs / nrow(train1))
+  
+  return(NULL)
+  
+}))
+
+
+varnames_3fx_Make_Model_SubModel <- c("Trim", "VehYear")
+invisible(lapply(varnames_3fx_Make_Model_SubModel, varname_pre = "Make_Model_SubModel", function(x, varname_pre) {
+  
+  varname_iact <- paste(varname_pre, x, sep = "_")
+  train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
+  train1 <<- 
+    doPrepExplore:::consolidate_sparse_other_cat(train1, varname_iact, threshold = thresh_nobs / nrow(train1))
+  
+  return(NULL)
+  
+}))
+
+train1 <- doPrepExplore:::construct_interact_char(train1, c("Make_Model_SubModel", "Trim", "VehYear"))
+train1 <- 
+  doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_SubModel_Trim_VehYear", threshold = thresh_nobs / nrow(train1))
+
+
+
+
 
 train1 <- 
   doPrepExplore:::consolidate_sparse_other_cat(train1, "Size", threshold = thresh_nobs / nrow(train1))
 
 train1 <- 
   doPrepExplore:::consolidate_sparse_other_cat(train1, "Color", threshold = thresh_nobs / nrow(train1))
+
+
+#end vehicle char ------------
+
+
 
 
 
