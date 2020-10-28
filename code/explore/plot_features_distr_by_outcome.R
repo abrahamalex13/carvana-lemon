@@ -15,8 +15,8 @@ varnames_plot <- c(varnames_plot, "VehBCost",
                    "RatioCostAuctionClean", "RatioCostRetailClean",
                    "RatioWarrantyVehBCost", "VehOdo")
 p_distr_conti_by_y.l <-
-  lapply(varnames_plot, df = train1_keep, varname_grp = "Lemon", path_filename_print = NULL,
-            FUN = doPrepExplore:::ggplot_density_x)
+  lapply(varnames_plot, df = train1_keep, group = "Lemon", color = "Lemon", 
+         path_filename_print = NULL, FUN = doPrepExplore:::ggplot_density_x)
 names(p_distr_conti_by_y.l) <- varnames_plot
 
 filename_out <- paste(path_plots, "supervised/", "price_quantities_by_y", ".pdf", sep = "")
@@ -44,7 +44,8 @@ varnames_tab <- c("PurchDate_year", "PurchDate_month", "PurchDate_day",
 
 #share
 p_distr_discrete_by_y.l <- 
-  lapply(varnames_tab, df = train1_keep, varname_grp = "Lemon", units_share = T, 
+  lapply(varnames_tab, df = train1_keep, group = "Lemon", fill = "Lemon",
+         units_share = TRUE, order_x = TRUE, 
          path_filename_print = NULL, FUN = doPrepExplore:::ggplot_bar_x)
 names(p_distr_discrete_by_y.l) <- varnames_tab
 
@@ -52,7 +53,9 @@ p_distr_discrete_by_y.l[["Make"]] <-
   p_distr_discrete_by_y.l[["Make"]] + 
     theme(axis.text.x = element_text(angle = 90))
 p_distr_discrete_by_y.l[["VehYear"]] <- 
-  doPrepExplore:::ggplot_bar_x(train1_keep, "VehYear", "Lemon", order_x = F, units_share = T)
+  doPrepExplore:::ggplot_bar_x(df = train1_keep, varname_x = "VehYear", 
+                               group = "Lemon", fill = "Lemon", 
+                               order_x = FALSE, units_share = TRUE)
 
 
 p_distr_discrete_by_y.l <- 

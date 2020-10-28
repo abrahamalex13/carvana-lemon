@@ -19,7 +19,7 @@ test1 <- test1 %>%
 
 
 
-varname_to_char <- c("BYRNO")
+varname_to_char <- c("BYRNO", "VNZIP1")
 train1 <- train1 %>% 
   mutate_at(varname_to_char, as.character)
 test1 <- test1 %>% 

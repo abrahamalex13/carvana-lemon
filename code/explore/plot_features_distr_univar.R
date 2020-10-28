@@ -9,8 +9,8 @@ varnames_plot <- c(varnames_plot, "VehBCost",
                    "RatioCostAuctionAverage", "RatioCostRetailAverage",
                    "RatioCostAuctionClean", "RatioCostRetailClean",
                    "RatioWarrantyVehBCost")
-p_distr_conti.l <- lapply(varnames_plot, df = train1, varname_grp = NULL, path_filename_print = NULL, 
-                            FUN = doPrepExplore:::ggplot_density_x)
+p_distr_conti.l <- lapply(varnames_plot, df = train1, path_filename_print = NULL, 
+                          FUN = doPrepExplore:::ggplot_density_x)
 names(p_distr_conti.l) <- varnames_plot
 filename_out <- paste(path_plots, "unsupervised/", "price_quantities_kde", ".pdf", sep = "")
 pdf(filename_out, width = 13, height = 8)
@@ -18,7 +18,6 @@ invisible(lapply(p_distr_conti.l, FUN = print))
 dev.off()
 
 #end conti vars -------------
-
 
 
 
@@ -35,7 +34,7 @@ varnames_tab <- c("PurchDate_year", "PurchDate_month", "PurchDate_day",
                   
                   "VNST", "PRIMEUNIT", "AUCGUART", "IsOnlineSale")
 
-p_distr_discrete.l <- lapply(varnames_tab, df = train1, varname_grp = NULL, order_x = TRUE, 
+p_distr_discrete.l <- lapply(varnames_tab, df = train1, order_x = TRUE,
                              path_filename_print = NULL, FUN = doPrepExplore:::ggplot_bar_x)
 names(p_distr_discrete.l) <- varnames_tab
 

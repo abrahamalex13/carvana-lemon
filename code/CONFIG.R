@@ -101,7 +101,7 @@ source("code/prep/edit_feature_values.R")
 source("code/prep/impute_features.R")
 source("code/prep/construct_features.R")
 
-source("code/explore/tab_features.R")
+# source("code/explore/tab_features.R")
 
 # source("code/explore/plot_features_distr_univar.R")
 # source("code/present/present_plot_features_distr_univar.R")
@@ -128,8 +128,8 @@ source("code/prep/prep_matrix_model.R")
 #model ----------
 
 source("code/model/summarize_pred_binary.R")
-source("code/model/baseline_fixed_effects_logistic.R")
-# source("code/model/penalized_linear.R")
+# source("code/model/baseline_fixed_effects_logistic.R")
+source("code/model/penalized_linear.R")
 # source("code/model/sandbox.R")
 
 

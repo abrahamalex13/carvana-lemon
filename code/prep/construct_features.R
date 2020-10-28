@@ -54,16 +54,75 @@ test1 <- test1 %>%
 
 
 
+
+
+
+
+
+#spline basis functions -------------
+
+varnames_x <- c("VehOdo", "RatioWarrantyVehBCost")
+
+train1_bsplines.l <- lapply(varnames_x, function(x) {
+  
+  values_x <- train1[[x]]
+  splines_x <- 
+    # doPrepExplore:::construct_bspline_basis(values_x, varnames_out_prefix = x)
+    splines::bs(values_x)
+  colnames(splines_x) <- paste(x, "_bs", 1:ncol(splines_x), sep = "")
+  
+  return(splines_x)
+  
+})
+names(train1_bsplines.l) <- varnames_x
+
+train1 <- bind_cols(train1, lapply(train1_bsplines.l, function(x) as.data.frame(x)))
+
+#end splines ---------
+
+
+
+
+
+
+
+
+
 # categorical feature dimension reduction -----------
 
-thresh_nobs <- 50
+do_consolidations <- 
+  function(df, varname_cat, thresh_nobs_consol, thresh_nobs_indic_other, 
+           value_consol = "OTHER") {
+    
+    #construct consolidated var
+    df <- 
+      doPrepExplore:::consolidate_sparse_other_cat(df, varname_cat, threshold = thresh_nobs_consol / nrow(df), 
+                                                   value_consol = value_consol, construct_indic_other = FALSE)
+    
+    #construct strictly an indicator of 'other'
+    df <- 
+      doPrepExplore:::consolidate_sparse_other_cat(df, varname_cat, threshold = thresh_nobs_indic_other / nrow(df), 
+                                                   value_consol = value_consol, construct_indic_other = TRUE)   
+    
+    return(df)
+    
+  }
+
+thresh_nobs_consol <- 35
+thresh_nobs_indic_other <- 100
 
 
-#vehicle characteristics ---------
 
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make", threshold = thresh_nobs / nrow(train1))
+#vehicle characteristics ------
+
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "VehYear", threshold = thresh_nobs / nrow(train1), value_consol = 1)
+  do_consolidations(df = train1, varname_cat = "Make", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")
+train1 <- 
+  do_consolidations(df = train1, varname_cat = "VehYear", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = 1)
 
 
 #Make/Model/SubModel/Trim
@@ -73,14 +132,20 @@ invisible(lapply(varnames_main_fx_Make, varname_pre = "Make", function(x, varnam
   varname_iact <- paste(varname_pre, x, sep = "_")
   train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
   train1 <<- 
-    doPrepExplore:::consolidate_sparse_other_cat(train1, varname_iact, threshold = thresh_nobs / nrow(train1))
+    do_consolidations(df = train1, varname_cat = varname_iact, 
+                      thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                      value_consol = "OTHER")    
   
   return(NULL)
   
 }))
 train1 <- doPrepExplore:::construct_interact_char(train1, c("Make_Model", "SubModel"))
-train1 <- doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_SubModel", threshold = thresh_nobs / nrow(train1))
-
+train1 <- 
+  do_consolidations(df = train1, varname_cat = "Make_Model_SubModel", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")  
+  
+  
 
 
 varnames_2fx_Make_Model <- c("SubModel", "Trim", "VehYear")
@@ -89,8 +154,10 @@ invisible(lapply(varnames_2fx_Make_Model, varname_pre = "Make_Model", function(x
   varname_iact <- paste(varname_pre, x, sep = "_")
   train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
   train1 <<- 
-    doPrepExplore:::consolidate_sparse_other_cat(train1, varname_iact, threshold = thresh_nobs / nrow(train1))
-  
+    do_consolidations(df = train1, varname_cat = varname_iact, 
+                      thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                      value_consol = "OTHER")        
+    
   return(NULL)
   
 }))
@@ -102,7 +169,9 @@ invisible(lapply(varnames_3fx_Make_Model_SubModel, varname_pre = "Make_Model_Sub
   varname_iact <- paste(varname_pre, x, sep = "_")
   train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
   train1 <<- 
-    doPrepExplore:::consolidate_sparse_other_cat(train1, varname_iact, threshold = thresh_nobs / nrow(train1))
+    do_consolidations(df = train1, varname_cat = varname_iact, 
+                      thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                      value_consol = "OTHER")    
   
   return(NULL)
   
@@ -110,32 +179,41 @@ invisible(lapply(varnames_3fx_Make_Model_SubModel, varname_pre = "Make_Model_Sub
 
 train1 <- doPrepExplore:::construct_interact_char(train1, c("Make_Model_SubModel", "Trim", "VehYear"))
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "Make_Model_SubModel_Trim_VehYear", threshold = thresh_nobs / nrow(train1))
+  do_consolidations(df = train1, varname_cat = "Make_Model_SubModel_Trim_VehYear", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")    
+  
 
 
-
-
-
+train1 <-
+  do_consolidations(df = train1, varname_cat = "Size", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")    
+  
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "Size", threshold = thresh_nobs / nrow(train1))
+  do_consolidations(df = train1, varname_cat = "Color", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")    
+  
 
-train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "Color", threshold = thresh_nobs / nrow(train1))
-
-
-#end vehicle char ------------
-
-
-
+#end vehicle char ---------
 
 
 #transaction
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "VNST", threshold = thresh_nobs / nrow(train1))
+  do_consolidations(df = train1, varname_cat = "VNST", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")    
+
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "VNZIP1", threshold = thresh_nobs / nrow(train1))
+  do_consolidations(df = train1, varname_cat = "VNZIP1", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")    
+  
 train1 <- 
-  doPrepExplore:::consolidate_sparse_other_cat(train1, "BYRNO", threshold = thresh_nobs / nrow(train1), value_consol = "OTHER")
+  do_consolidations(df = train1, varname_cat = "BYRNO", 
+                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    value_consol = "OTHER")    
 
 
 
@@ -143,20 +221,23 @@ train1 <-
 
 
 
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make", threshold = thresh_nobs / nrow(test1))
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Model_agg", threshold = thresh_nobs / nrow(test1))
-test1 <- test1 %>% 
-  mutate(Make_Model_agg_consol = case_when(
-    
-    Model_agg_consol == "OTHER" ~ Model_agg_consol,
-    TRUE ~ paste(Make, "_", Model_agg_consol, sep = "")
-    
-  ))
-test1 <- test1 %>% 
-  mutate(Make_Model_agg_Year = paste(Make_Model_agg_consol, "_", VehYear, sep = ""))
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make_Model_agg_Year", threshold = thresh_nobs / nrow(test1))
-
-test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "VehYear", threshold = thresh_nobs / nrow(test1), value_consol = 1)
 
 
-#end cat feature dim reduction -----
+# test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make", threshold = thresh_nobs / nrow(test1))
+# test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Model_agg", threshold = thresh_nobs / nrow(test1))
+# test1 <- test1 %>% 
+#   mutate(Make_Model_agg_consol = case_when(
+#     
+#     Model_agg_consol == "OTHER" ~ Model_agg_consol,
+#     TRUE ~ paste(Make, "_", Model_agg_consol, sep = "")
+#     
+#   ))
+# test1 <- test1 %>% 
+#   mutate(Make_Model_agg_Year = paste(Make_Model_agg_consol, "_", VehYear, sep = ""))
+# test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "Make_Model_agg_Year", threshold = thresh_nobs / nrow(test1))
+# 
+# test1 <- doPrepExplore:::consolidate_sparse_other_cat(test1, "VehYear", threshold = thresh_nobs / nrow(test1), value_consol = 1)
+
+
+#end cat feature dim reduction --------------
+
