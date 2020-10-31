@@ -1,6 +1,7 @@
 #prep_matrix_model.R
 
 
+
 #order factors for modeling treatment -------
 
 declare_factors_custom <- function(df) {
@@ -30,6 +31,7 @@ declare_factors_custom <- function(df) {
 
 train1_keep <- declare_factors_custom(train1_keep)
 train1_excl <- declare_factors_custom(train1_excl)
+rm(train1)
 
 #end order factors -----------------
 
@@ -73,7 +75,12 @@ varnames_conti <- c("RatioWarrantyVehBCost",
                     "VehOdo", colnames(train1_keep)[grepl("VehOdo_bs", colnames(train1_keep))])
 
 X_train1 <- expand_factor_features(train1_keep, c(varnames_conti, varnames_discrete))
+Y_train1 <- train1_keep[[varname_y]]
+rm(train1_keep)
+
 X_valid1 <- expand_factor_features(train1_excl, c(varnames_conti, varnames_discrete))
+Y_valid1 <- train1_excl[[varname_y]]
+rm(train1_excl)
 
 #ensure identical columns with training data.
 varnames_train_fill <- setdiff(colnames(X_train1), colnames(X_valid1))
@@ -91,7 +98,7 @@ X_valid1 <- cbind(X_valid1, blanks)
 
 
 
-#factor - conti var interactions --------------------
+#factor - conti var interactions, plus standardization --------------------
 
 construct_conti_factor_interact <- function(values_conti, col_binary_numeric) {
   
@@ -109,6 +116,10 @@ varnames_factor_Make_Model_Sub_VehYear <-
 
 varnames_factor_VNZIP1 <- 
   colnames(X_train1)[grepl(c("VNZIP1"), colnames(X_train1))]
+
+varnames_conti <- c("RatioWarrantyVehBCost", colnames(X_train1)[grepl("RatioWarrantyVehBCost_bs", colnames(X_train1))],
+                    "VehOdo", colnames(X_train1)[grepl("VehOdo_bs", colnames(X_train1))])
+
 
 
 
@@ -149,7 +160,24 @@ splines_iact.l <-
 splines_iact <- do.call(cbind, splines_iact.l)
 X_train1 <- cbind(X_train1, splines_iact)
 
+rm(splines_iact.l)
+rm(splines_iact)
+
+
+#standardizing
+transformer_std <- 
+  caret::preProcess(X_train1[, varnames_conti], method = c("center", "scale"))
+
+X_train_std <- predict(transformer_std, X_train1)
+rm(X_train1)
+
+X_train_std_sx <- Matrix(as.matrix(X_train_std), sparse = TRUE)
+rm(X_train_std)
+
+
 #end train ------------------
+
+
 
 
 
@@ -191,31 +219,15 @@ splines_iact.l <-
 splines_iact <- do.call(cbind, splines_iact.l)
 X_valid1 <- cbind(X_valid1, splines_iact)
 
+
+#standardize
+X_valid_std <- predict(transformer_std, X_valid1)
+rm(X_valid1)
+
+X_valid_std_sx <- Matrix(as.matrix(X_valid_std), sparse = TRUE)
+rm(X_valid_std)
+
 #end validate ---------------
 
 
 #end factor - conti var interactions ------------------------------
-
-
-
-
-
-
-
-
-
-#standardize conti ----------
-
-varnames_conti <- c("RatioWarrantyVehBCost", colnames(X_train1)[grepl("RatioWarrantyVehBCost_bs", colnames(X_train1))],
-                    "VehOdo", colnames(X_train1)[grepl("VehOdo_bs", colnames(X_train1))])
-transformer_std <- caret::preProcess(X_train1[, varnames_conti], method = c("center", "scale"))
-
-X_train_std <- predict(transformer_std, X_train1)
-X_valid_std <- predict(transformer_std, X_valid1)
-
-# end std ---------
-
-X_train_std_sx <- Matrix(as.matrix(X_train_std), sparse = TRUE)
-rm(X_train1)
-X_valid_std_sx <- Matrix(as.matrix(X_valid_std), sparse = TRUE)
-rm(X_valid1)

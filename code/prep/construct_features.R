@@ -68,7 +68,7 @@ train1_bsplines.l <- lapply(varnames_x, function(x) {
   values_x <- train1[[x]]
   splines_x <- 
     # doPrepExplore:::construct_bspline_basis(values_x, varnames_out_prefix = x)
-    splines::bs(values_x)
+    splines::bs(values_x, df = 3)
   colnames(splines_x) <- paste(x, "_bs", 1:ncol(splines_x), sep = "")
   
   return(splines_x)
@@ -108,7 +108,7 @@ do_consolidations <-
     
   }
 
-thresh_nobs_consol <- 35
+thresh_nobs_consol <- 30
 thresh_nobs_indic_other <- 100
 
 
@@ -133,17 +133,19 @@ invisible(lapply(varnames_main_fx_Make, varname_pre = "Make", function(x, varnam
   train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
   train1 <<- 
     do_consolidations(df = train1, varname_cat = varname_iact, 
-                      thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                      thresh_nobs_consol = thresh_nobs_consol, 
+                      thresh_nobs_indic_other = thresh_nobs_indic_other, 
                       value_consol = "OTHER")    
   
   return(NULL)
   
 }))
-train1 <- doPrepExplore:::construct_interact_char(train1, c("Make_Model", "SubModel"))
-train1 <- 
-  do_consolidations(df = train1, varname_cat = "Make_Model_SubModel", 
-                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
-                    value_consol = "OTHER")  
+# train1 <- doPrepExplore:::construct_interact_char(train1, c("Make_Model", "SubModel"))
+# train1 <- 
+#   do_consolidations(df = train1, varname_cat = "Make_Model_SubModel", 
+#                     thresh_nobs_consol = thresh_nobs_consol*1.1, 
+#                     thresh_nobs_indic_other = thresh_nobs_indic_other, 
+#                     value_consol = "OTHER")  
   
   
 
@@ -155,7 +157,8 @@ invisible(lapply(varnames_2fx_Make_Model, varname_pre = "Make_Model", function(x
   train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
   train1 <<- 
     do_consolidations(df = train1, varname_cat = varname_iact, 
-                      thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                      thresh_nobs_consol = thresh_nobs_consol*.9, 
+                      thresh_nobs_indic_other = thresh_nobs_indic_other, 
                       value_consol = "OTHER")        
     
   return(NULL)
@@ -170,7 +173,8 @@ invisible(lapply(varnames_3fx_Make_Model_SubModel, varname_pre = "Make_Model_Sub
   train1 <<- doPrepExplore:::construct_interact_char(train1, c(varname_pre, x))
   train1 <<- 
     do_consolidations(df = train1, varname_cat = varname_iact, 
-                      thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                      thresh_nobs_consol = thresh_nobs_consol*.9, 
+                      thresh_nobs_indic_other = thresh_nobs_indic_other, 
                       value_consol = "OTHER")    
   
   return(NULL)
@@ -180,14 +184,16 @@ invisible(lapply(varnames_3fx_Make_Model_SubModel, varname_pre = "Make_Model_Sub
 train1 <- doPrepExplore:::construct_interact_char(train1, c("Make_Model_SubModel", "Trim", "VehYear"))
 train1 <- 
   do_consolidations(df = train1, varname_cat = "Make_Model_SubModel_Trim_VehYear", 
-                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    thresh_nobs_consol = thresh_nobs_consol*.9, 
+                    thresh_nobs_indic_other = thresh_nobs_indic_other, 
                     value_consol = "OTHER")    
   
 
 
 train1 <-
   do_consolidations(df = train1, varname_cat = "Size", 
-                    thresh_nobs_consol = thresh_nobs_consol, thresh_nobs_indic_other = thresh_nobs_indic_other, 
+                    thresh_nobs_consol = thresh_nobs_consol, 
+                    thresh_nobs_indic_other = thresh_nobs_indic_other, 
                     value_consol = "OTHER")    
   
 train1 <- 

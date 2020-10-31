@@ -14,6 +14,7 @@ library(doParallel)
 library(parallel)
 
 library(glmnet)
+library(biglm)
 
 set.seed(2349)
 
