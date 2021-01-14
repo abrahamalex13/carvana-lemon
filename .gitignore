@@ -22,25 +22,11 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 
-#raw data
-data_raw/*
-
-#ensure local machine produces data_processed, plots
-data_out/*
-data_processed/*
-plots/*
-
-#doc files
-doc/plan.Rmd
-doc/plan.html
-doc/report_stat684/*
-doc/slides_stat684/*
-doc/eda/used-car-mkt-eda.html
-doc/eda/used-car-mkt-eda_cache/**
-doc/eda/used-car-mkt-eda_files/**
-
 .Rproj.user
-
-code/model/**
-
 .RHistory
+
+#cookiecutter template
+data/**
+reports/**
+models/**
+

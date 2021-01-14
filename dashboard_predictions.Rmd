@@ -1,0 +1,274 @@
+---
+title: "Predicting Lemons at Wholesale Auto Auction"
+runtime: shiny
+output: 
+    flexdashboard::flex_dashboard:
+      orientation: rows
+      vertical_layout: scroll
+    
+---
+
+
+```{r setup, include = FALSE, warning = FALSE, message = FALSE}
+
+  knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+  
+  library(tidyverse)
+  library(lubridate)
+  library(caret)
+
+  library(doPrepExplore)
+  library(scales)
+  
+  library(glmnet)
+  library(ranger)
+  library(gbm)
+  
+  library(kableExtra)
+
+```
+
+```{r}
+
+  #reference tables, lighter-weight than full training data
+  freq_tab.l <- readRDS("data/processed/frequency_tabs_train.rds")
+  freq_zip <- readRDS("data/external/hhincome_median_zip5.rds") %>% 
+    distinct()
+
+  #initialize container for user-recorded test obs
+  df1_user.rv <- reactiveValues()
+  
+  varnames_input_coded <- c("Make", "Model", "SubModel", "VehYear", "VehOdo", "RatioWarrantyVehBCost", 
+                            "Auction", "VNST", "VNZIP1", "Size", "Color")
+  varnames_input_present <- c("Make", "Model", "SubModel", "Year", "Mileage", "Warranty-Price Ratio", 
+                              "Auction", "State", "Zip", "Size", "Color")
+  
+  #note those varnames too arcane for user spec
+  varnames_nuisance <- c("PurchDate", "WheelType", "BYRNO", "AUCGUART", "PRIMEUNIT")
+
+```
+
+
+Column {.sidebar data-width=450}
+---------------------
+
+Tell me about a prospective wholesale auction purchase.
+
+```{r inputTest}
+
+  selectInput('Make', label = "Make", 
+              choices = freq_tab.l[["Make"]] %>% pull(Make) %>% sort())
+
+  filtered_select_Model <- reactive({
+    
+    freq_tab.l[["Make_Model"]] %>% 
+      dplyr::filter(Make == local(input$Make)) %>% 
+      pull(Model) %>% 
+      unique() %>% 
+      sort()
+    
+  })
+  
+  renderUI({
+
+      selectInput('Model', label = "Model",
+                choices = filtered_select_Model())
+    
+  })
+
+  filtered_select_SubModel <- reactive({
+    
+    freq_tab.l[["Make_Model_SubModel"]] %>% 
+      dplyr::filter(Make == local(input$Make) & Model == local(input$Model)) %>% 
+      pull(SubModel) %>% 
+      unique() %>% 
+      sort()
+    
+  })
+  
+  renderUI({
+
+      selectInput('SubModel', label = "SubModel",
+                choices = filtered_select_SubModel())
+    
+  })
+
+  selectInput('VehYear', label = "Year", 
+              choices = freq_tab.l[["VehYear"]] %>% pull(VehYear) %>% sort())
+  
+  selectInput('Size', label = "Size", 
+              choices = freq_tab.l[["Size"]] %>% pull(Size) %>% sort())
+  
+    selectInput('Color', label = "Color", 
+              choices = freq_tab.l[["Color"]] %>% pull(Color) %>% sort())
+  
+  numericInput('VehOdo', label = "Mileage", value = 100000, min = 0)
+  
+  numericInput('RatioWarrantyVehBCost', label = "Warranty/Price Ratio", 
+               value = .5, min = 0, max = 1)
+  
+  
+  
+  selectInput('Auction', label = "Auction", 
+              choices = freq_tab.l[["Auction"]] %>% pull(Auction) %>% sort())
+  
+  selectInput('VNST', label = "State (Transaction Location)", 
+              choices = freq_tab.l[["VNST"]] %>% pull(VNST) %>% sort())
+  
+  selectInput('VNZIP1', label = "Zipcode (of primary use)", 
+              choices = freq_zip[["VNZIP1"]] %>% sort())
+  #ZIP was treated hierarchical, though now imagine, simply where the car was usually driven
+  # filtered_select_VNZIP1 <- 
+  #   
+  #   reactive({
+  #   
+  #   freq_tab.l[["VNST_VNZIP1"]] %>% 
+  #     dplyr::filter(VNST == local(input$VNST)) %>% 
+  #     pull(VNZIP1) %>% 
+  #     unique() %>% 
+  #     sort()
+  #   
+  # })
+  # 
+  # renderUI({
+  # 
+  #     selectInput('VNZIP1', label = "Zipcode",
+  #               choices = filtered_select_VNZIP1())
+  #   
+  # })
+
+```
+
+```{r storeTest}
+
+  #officially store (queue) one user-recorded test observation
+  actionButton('add_obs', label = "Click to queue the above inputs.")
+
+  observeEvent(input$add_obs, {
+    
+    idx <- as.character( local(input$add_obs) )
+    df1_user.rv[[idx]] <- data.frame(
+        "Make" = local(input$Make)
+        , "Model" = local(input$Model)
+        , "SubModel" = local(input$SubModel)
+        , "VehYear" = as.numeric( local(input$VehYear) )
+        , "VehOdo" = local(input$VehOdo)
+        , "RatioWarrantyVehBCost" = local(input$RatioWarrantyVehBCost)
+        
+        , "Auction" = local(input$Auction)
+        , "VNST" = local(input$VNST)
+        , "VNZIP1" = local(input$VNZIP1)
+        
+        #some fields too arcane for user spec
+        , "PurchDate" = as.Date("2009-12-07")
+        , "WheelType" = "Alloy"
+        , "BYRNO" = "21973"
+        , stringsAsFactors = FALSE
+      )
+    
+  })
+
+```
+
+```{r promptRbindTests}
+
+  renderText(" ")
+  actionButton('have_all_obs', label = "Click to predict lemon probabilities for all queued inputs.")
+
+```
+
+```{r rbindTests}
+
+  df1_user <- eventReactive(input$have_all_obs, {
+
+      df1_user.l <- reactiveValuesToList(df1_user.rv)
+      bind_rows(df1_user.l)
+
+  })
+
+```
+
+```{r run}
+
+  Yhat_test <- eventReactive(df1_user(), {
+    
+    # output$msg_comp <- renderText({"Computing ... "})
+    # uiOutput(renderUI({ textOutput("msg_comp") }) )
+    # uiOutput("msg_comp")
+    # output$window_msg_comp <- renderUI({ textOutput("msg_comp") })
+    # uiOutput("window_msg_comp")
+    # renderText({"Computing ... "})
+    showModal(modalDialog("Computing ... "))
+    
+    df0 <- isolate(df1_user())
+    df <- df0
+    data_source_is_static_augmented <- FALSE
+    run_type <- "test"
+    form_data <- "form1"
+    
+    # setwd("..")
+    source("src/prep_main.R", local = TRUE)
+    
+    
+    
+
+    rm(df)
+    
+    run_type_train <- FALSE
+      do_validate <- FALSE
+    run_type_test <- TRUE
+    
+    model_type <- "rf"
+    #more basis functions means, 
+    #lower chance sparse saves space (post-standardization)
+    to_sparse <- FALSE
+    
+    filename_identifiers_test <- NULL
+    identifiers_test <- df0
+    varnames_identifiers_test <- setdiff(colnames(df0), varnames_nuisance)
+    filename_pred <- NULL
+    
+    source("src/model_main.R", local = TRUE)
+    
+    removeModal()
+    
+    Yhat_test[["InputID"]] <- as.character( nrow(Yhat_test):1 )
+    Yhat_test %>% 
+      dplyr::select(InputID, everything()) %>% 
+      rename_at(vars(varnames_input_coded), ~varnames_input_present) %>% 
+      rename(`Lemon Probability` = Yhat) %>% 
+      mutate(`Lemon Probability` = round(`Lemon Probability`, 2))
+    
+  })
+
+```
+
+
+Row
+---------------------
+
+### Visualize 
+
+```{r presentPlot}
+  
+  renderPlot({
+    
+    ggplot(Yhat_test()) + 
+      geom_col(aes(InputID, `Lemon Probability`)) + 
+      ylim(c(0, 1)) + 
+      labs(title = "Lemon Probabilities")
+    
+  })
+
+```
+
+Row
+---------------------
+
+### Record
+
+```{r presentTable}
+
+  renderUI({ HTML( Yhat_test() %>% kable() %>% kable_styling() ) })  
+
+```

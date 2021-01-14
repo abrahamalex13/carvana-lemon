@@ -1,12 +1,6 @@
 #impute_features
 
-
-#MMR vars are price quantities
-varnames_impute <- c(colnames(train1)[grepl("MMR", colnames(train1))], "VehBCost")
-MMR_impute_results.l <- doPrepExplore:::impute_group_mean(train1, 
-                    varnames_impute = varnames_impute, 
-                    varnames_grp = c("VehYear", "Make", "Model_agg"))
-train1 <- MMR_impute_results.l[["df_impute"]]
+imputation_reference <- readRDS(filename_imputation_reference) 
 
 
 
