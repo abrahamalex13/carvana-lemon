@@ -36,7 +36,7 @@ directory_data_mdl_in <- "data/processed/enter_model/cv1/"
 directory_operators_prep <- "data/processed/operators_prep/"
 
 
-run_type <- "test"
+run_type <- "train"
   do_split_data <- TRUE
     fraction_train_split <- .75
 

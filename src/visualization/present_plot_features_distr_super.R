@@ -29,8 +29,8 @@ saveRDS(p_distr_discrete_by_y_pres.l, "reports/figures/supervised/discrete_var_b
 #conti vars -------
 
 p_sub.l <- p_distr_conti_by_y.l[c("VehOdo", "VehBCost",
-                                # "RatioCostAuctionAverage", "RatioCostRetailAverage",
-                                # "RatioCostAuctionClean", "RatioCostRetailClean",
+                                "RatioCostAuctionAverage", "RatioCostRetailAverage",
+                                "RatioCostAuctionClean", "RatioCostRetailClean",
                                 "RatioWarrantyVehBCost")]
 
 p_distr_conti_by_y_pres.l <- 

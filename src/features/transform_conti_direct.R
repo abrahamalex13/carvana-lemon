@@ -13,11 +13,11 @@ transform_conti_direct <- function(df, varnames_to_log) {
            MMRRatioAuctionRetailCleanPrice = MMRAcquisitionAuctionCleanPrice / MMRAcquisitionRetailCleanPrice,
            
            RatioCostAuctionAverage = VehBCost / MMRAcquisitionAuctionAveragePrice,
-           # RatioCostRetailAverage = VehBCost / MMRAcquisitionRetailAveragePrice,
+           RatioCostRetailAverage = VehBCost / MMRAcquisitionRetailAveragePrice,
            # SpreadRatioARAverage = RatioCostAuctionAverage - RatioCostRetailAverage,
            
            RatioCostAuctionClean = VehBCost / MMRAcquisitionAuctionCleanPrice,
-           # RatioCostRetailClean = VehBCost / MMRAcquisitionRetailCleanPrice,
+           RatioCostRetailClean = VehBCost / MMRAcquisitionRetailCleanPrice,
            # SpreadRatioARClean = RatioCostAuctionClean - RatioCostRetailClean,
            
            SpreadRatioCostAuctionAC = RatioCostAuctionAverage - RatioCostAuctionClean,

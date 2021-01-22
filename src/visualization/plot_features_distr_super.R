@@ -12,8 +12,8 @@ df <- df %>%
 
 varnames_plot <- colnames(df)[grepl("MMR", colnames(df))]
 varnames_plot <- c(varnames_plot, "VehBCost",
-                   # "RatioCostAuctionAverage", "RatioCostRetailAverage",
-                   # "RatioCostAuctionClean", "RatioCostRetailClean",
+                   "RatioCostAuctionAverage", "RatioCostRetailAverage",
+                   "RatioCostAuctionClean", "RatioCostRetailClean",
                    "RatioWarrantyVehBCost", "VehOdo")
 p_distr_conti_by_y.l <-
   lapply(varnames_plot, df = df, group = "Lemon", color = "Lemon", FUN = function(x, df, group, color) {
