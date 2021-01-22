@@ -31,4 +31,5 @@ reports/**
 models/**
 
 src/models/**
+src/model_main.R
 
