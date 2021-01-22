@@ -1,7 +1,5 @@
 #model_main.R
 
-time_start <- Sys.time()
-
 
 #data load -----------------
 
@@ -33,11 +31,12 @@ if (run_type_train) {
 
 
 
-#individual model estimation and/or predictions ----------
+time_start <- Sys.time()
+#individual model estimation ---------
 
-if (model_type == "rf") {
-  
-  if (run_type_train) {
+if (run_type_train) {
+
+  if (model_type == "rf") {
     
     grid_B <- 1000 #c(1000, 2000) #c(100, 250, 400) #500
     grid_wgt_event <- 1
@@ -51,31 +50,8 @@ if (model_type == "rf") {
       X = X, Y = Y, grid_tune = grid_tune, filename_out = paste(directory_mdl_save, "rf.rds", sep = "")
       ) )
     
-  }
-  
-  if (run_type_test) {
+  } else if (model_type == "gbm") {
     
-    mdl.l <- readRDS(paste(directory_mdl_save, "rf.rds", sep = ""))
-    source("src/models/rf_use.R")
-    
-    if (run_type_test) Yhat_test.l <- lapply(
-      mdl.l, newx = X_test, function(x, newx) extract_preds_ranger(mdl = x$mdl, newx = newx)
-      )
-    
-    if (run_type_train && do_validate) {
-      p <- validate_rangers(mdl.l, X_train = X, Y_train = Y, X_test = X_test, Y_test = Y_test)
-    }
-    
-  }
-  
-}
-
-
-
-if (model_type == "gbm") {
-  
-  if (run_type_train) {
-  
     grid_loss <- "adaboost" #c("bernoulli", "adaboost") #c("bernoulli", "adaboost")
     grid_n.trees <- 2500 #seq(100, 3000, by = 250) #1000 #500
     grid_interaction.depth <- 40
@@ -95,34 +71,9 @@ if (model_type == "gbm") {
     source("src/models/gbm_estimate.R")
     invisible( estimate_gbms(
       X = X, Y = Y, grid_tune = grid_tune, filename_out = paste(directory_mdl_save, "gbm.rds", sep = "")
-      ) )
-      
-    }
-  
-  if (run_type_test) {
+    ) )
     
-    mdl.l <- readRDS(paste(directory_mdl_save, "gbm.rds", sep = ""))
-    source("src/models/gbm_use.R")
-    
-    Yhat_test.l <- lapply(
-      mdl.l, newx = X_test, function(x, newx) extract_preds_gbm(mdl = x$mdl, newx = newx)
-    )
-    
-    if (run_type_train && do_validate) {
-      scores <- validate_gbms(mdl.l, X_train = X, Y_train = Y, X_test = X_test, Y_test = Y_test)
-      saveRDS(scores, file = paste(directory_mdl_save, "scores_gbm.rds", sep = ""))
-    }
-    
-  }
-  
-  
-}
-
-
-
-if (model_type == "xgboost") {
-  
-  if (run_type_train) {
+  } else if (model_type == "xgboost") {
     
     grid_objective <- "binary:logitraw"
     grid_nrounds <- 4000
@@ -156,31 +107,7 @@ if (model_type == "xgboost") {
       X = X, Y = Y, grid_tune = grid_tune, filename_out = paste(directory_mdl_save, "xgboost.rds", sep = "")
     ))
     
-  }
-  
-  if (run_type_test) {
-    
-    mdl.l <- readRDS(paste(directory_mdl_save, "xgboost.rds", sep = ""))
-    source("src/models/xgboost_use.R")
-    
-    Yhat_test.l <- lapply(
-      mdl.l, newx = X_test, function(x, newx) extract_preds_xgb(mdl = x$mdl, newx = newx, transform_logit = TRUE)
-    )
-    
-    if (run_type_train && do_validate) {
-      scores <- validate_xgboosts(mdl.l, X_train = X, Y_train = Y, X_test = X_test, Y_test = Y_test)
-      saveRDS(scores, file = paste(directory_mdl_save, "scores_xgboost.rds", sep = ""))
-      
-    }
-    
-  }
-  
-}
-
-
-if (model_type == "glm") {
-  
-  if (run_type_train) {
+  } else if (model_type == "glm") {
     
     grid_alpha <- c(0, .5) #c(.5, 1) #c(0, .5, 1)
     grid_w_event <- c(1, 2)
@@ -193,21 +120,56 @@ if (model_type == "glm") {
   }
   
 }
-
-#end indiv mdl est, pred ----------------------
   
+#end model estimation ---------
 time_end <- Sys.time()
-print(paste("time elapsed: ", time_end - time_start, sep = ""))
+print(paste("model estimation time elapsed: ", time_end - time_start, sep = ""))
+  
+
+
+#model predictions, validation if requested -----------
+
+if (run_type_test) {
+  
+  mdl.l <- readRDS(paste(directory_mdl_save, model_type, ".rds", sep = ""))
+  
+  Yhat_test.l <- lapply(
+    mdl.l, newdata = X_test, function(x, newdata) predict(x$mdl, newdata = newdata)
+  )
+  
+  #extract standard-form predictions, from variable 'predict' output.
+  if (model_type == "rf") Yhat_test.l <- lapply(Yhat_test.l, function(x) x$predictions[, 2])
+  if (model_type == "xgboost" & do_transform_logit) {
+    Yhat_test.l <- lapply(Yhat_test.l, function(x) exp(x) / (1 + exp(x)))
+  }
+
+  
+  #(validate under test & train type-execution)
+  
+  if (run_type_train) {
+  
+    scores <- useValidateModels::validate_tunes_classifier(
+      mdl.l = mdl.l, X_train = X, Y_train = Y, X_test = X_test, Y_test = Y_test, scores = "Gini", 
+      filename_out = paste(directory_mdl_save, "scores_", model_type, ".rds", sep = "")
+    )
+  
+  }
+  
+}
+  
+#end model pred & validate --------------------------
+
 
 
 #ensemble methods
 
 
 
-#predictions output
-if (run_type_test && !do_validate) {
+#output predictions along with attributes set (identifiers, etc)
+if (run_type_test && !run_type_train) {
   
-  source("src/data/output_pred.R")
-  Yhat_test <- output_pred(Yhat = Yhat_test.l[[1]], identifiers = identifiers_test, filename_out = filename_pred)
+  Yhat_test <- useValidateModels::output_pred_attr_set(
+    pred = Yhat_test.l[[1]], attr_set = identifiers_test, filename_out = filename_pred
+  )
   
 }

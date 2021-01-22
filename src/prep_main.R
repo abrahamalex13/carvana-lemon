@@ -6,7 +6,11 @@ if (data_source_is_static_augmented) {
   
   #load primary --------
   
-  df <- read_csv(paste("data/raw/", filename_raw_in, sep=""))
+  df <- read_csv(paste("data/raw/", filename_raw_in, sep=""), guess_max = 100000)
+  
+  #ensure no train/test leakage
+  #note external seed dependence!
+  if (do_split_data) df <- doPrepExplore::split_df(df, fraction_train = fraction_train_split, run_type = run_type)
   
   #processing pipeline applicable _strictly_ for X, not Y
   if (varname_y %in% colnames(df)) {
@@ -21,10 +25,6 @@ if (data_source_is_static_augmented) {
     filename_operator = paste(directory_operators_prep, "initial_check_columns_order_operator.rds", sep = ""),
     run_type = run_type
   )
-  
-  #ensure no train/test leakage
-  #note external seed dependence!
-  if (do_split_data) df <- doPrepExplore::split_df(df, fraction_train = fraction_train_split, run_type = run_type)
   
   #end load primary ---------
   
@@ -159,7 +159,7 @@ rm(Y)
 
 
 
-#(natural opening for EDA)
+#natural opening for EDA -- see 'visualization' folder scripts.
 
 
 

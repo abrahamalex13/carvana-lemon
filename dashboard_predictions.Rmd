@@ -142,7 +142,7 @@ Tell me about a prospective wholesale auction purchase.
 ```{r storeTest}
 
   #officially store (queue) one user-recorded test observation
-  actionButton('add_obs', label = "Click to queue the above inputs.")
+  actionButton('add_obs', label = "Click to queue the vehicle above.")
 
   observeEvent(input$add_obs, {
     
@@ -173,7 +173,7 @@ Tell me about a prospective wholesale auction purchase.
 ```{r promptRbindTests}
 
   renderText(" ")
-  actionButton('have_all_obs', label = "Click to predict lemon probabilities for all queued inputs.")
+  actionButton('have_all_obs', label = "Click to predict lemon probabilities for all queued vehicles.")
 
 ```
 
